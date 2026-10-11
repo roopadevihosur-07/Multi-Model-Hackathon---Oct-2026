@@ -56,8 +56,8 @@ With no keys, the app still runs end to end in **simulated mode**, using local r
                      → topics, decisions, tasks, questions, ideas
                                    │  each item cites the lines it came from
                                    ▼
-                     Claude Sonnet (checker)
-                     decisions and tasks only
+                     Claude Haiku (checker)
+                     decisions and tasks only, low effort
                      → verified · not agreed · pending · unsupported
                                    │
                                    ▼
@@ -77,8 +77,8 @@ Each model has one job. The choice balances cost, speed, and independence from t
 | Listen | **Deepgram nova-3**, streaming, with speaker labels | Real-time text, and it tells the map who said each line. |
 | Listen (fallback) | **Chrome speech recognition** | Free and needs no setup, so live mode still works. It has no speaker labels. |
 | Map updates and alert check | **Gemini 3.5 Flash-Lite** | Fast and cheap enough to update the map every few seconds. The alert check only runs when your name and a question appear together. |
-| Check | **Claude Sonnet** | A different provider from the Gemini mapper, so no model grades its own output. It checks decisions and tasks against the transcript. |
-| Recaps and overview | **Claude Sonnet** | The strongest of the three at turning a messy conversation into calm, short summaries. These run only when you ask. |
+| Check | **Claude Haiku 5.5**, low effort | A different provider from the Gemini mapper, so no model grades its own output. Checking runs after every map update, so it uses a model priced like Gemini ($0.10 / $0.50 per million tokens) rather than Sonnet. |
+| Recaps and overview | **Claude Sonnet 5.5** | Best at turning a messy conversation into calm, short summaries. Recaps run when you ask; the overview refreshes while its tab is open. |
 | Demo and no-key fallback | **Local rules** (simulated mode) | Keeps the demo running without keys. These are rules, not model output. |
 
 If a provider's key is missing or a call fails, the router falls back to the next provider for that job. The checker always prefers a provider different from the mapper.

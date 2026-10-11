@@ -18,14 +18,28 @@ const env = process.env;
 export const MODELS = {
   gemini: env.GEMINI_MODEL || "gemini-3.5-flash-lite",
   anthropic: env.ANTHROPIC_MODEL || "claude-sonnet-5-5",
+  // The checker runs after every map update, so it uses the small Claude model.
+  check: env.ANTHROPIC_CHECK_MODEL || "claude-haiku-5-5",
 };
 
-// USD per million tokens [input, output]
+// USD per million tokens [input, output], by provider default model
 export const PRICES: Record<string, [number, number]> = {
   gemini: [0.1, 0.4],
-  anthropic: [3, 15],
+  anthropic: [2, 10], // Claude Sonnet 5.5
   simulated: [0, 0],
 };
+
+// Models priced differently from their provider's default
+const MODEL_PRICES: Record<string, [number, number]> = {
+  "claude-sonnet-5-5": [2, 10],
+  "claude-haiku-5-5": [0.1, 0.5],
+};
+
+export const priceOf = (provider: string, model?: string): [number, number] =>
+  (model && MODEL_PRICES[model]) || PRICES[provider] || [0, 0];
+
+// Per-call overrides: which Claude model to use, and how hard it should think.
+export type CallOptions = { anthropicModel?: string; effort?: "low" | "medium" | "high" };
 
 export function hasKey(p: Provider): boolean {
   if (p === "gemini") return !!env.GEMINI_API_KEY;
@@ -96,15 +110,17 @@ async function callGemini(system: string, user: string): Promise<ModelResult> {
   };
 }
 
-async function callAnthropic(system: string, user: string): Promise<ModelResult> {
+async function callAnthropic(system: string, user: string, opts: CallOptions = {}): Promise<ModelResult> {
   const t0 = Date.now();
-  const model = MODELS.anthropic;
+  const model = opts.anthropicModel ?? MODELS.anthropic;
   const data = await post(
     "https://api.anthropic.com/v1/messages",
     { "x-api-key": env.ANTHROPIC_API_KEY!, "anthropic-version": "2023-06-01" },
     {
       model,
-      max_tokens: 1500,
+      // Thinking tokens count toward max_tokens, so leave room for the JSON after them.
+      max_tokens: 4000,
+      ...(opts.effort ? { output_config: { effort: opts.effort } } : {}),
       system: system + "\nRespond with a single JSON object only, no prose.",
       messages: [{ role: "user", content: user }],
     },
@@ -120,7 +136,7 @@ async function callAnthropic(system: string, user: string): Promise<ModelResult>
   };
 }
 
-const CALLERS: Record<Exclude<Provider, "simulated">, (s: string, u: string) => Promise<ModelResult>> = {
+const CALLERS: Record<Exclude<Provider, "simulated">, (s: string, u: string, o?: CallOptions) => Promise<ModelResult>> = {
   gemini: callGemini,
   anthropic: callAnthropic,
 };
@@ -134,12 +150,13 @@ export async function route(
   system: string,
   user: string,
   simulate: () => any,
+  opts: CallOptions = {},
 ): Promise<ModelResult & { fallbackFrom?: string[] }> {
   const failed: string[] = [];
   for (const p of order) {
     if (!hasKey(p)) continue;
     try {
-      const r = await CALLERS[p](system, user);
+      const r = await CALLERS[p](system, user, opts);
       return failed.length ? { ...r, fallbackFrom: failed } : r;
     } catch (e: any) {
       console.warn(`[model] ${p} failed: ${e?.message ?? e}`);

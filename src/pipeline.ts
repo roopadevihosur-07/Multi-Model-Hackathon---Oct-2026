@@ -1,4 +1,4 @@
-import { route, PRICES, type ModelResult, type Provider } from "./models.ts";
+import { route, PRICES, MODELS, priceOf, type ModelResult, type Provider } from "./models.ts";
 
 // ---------- Types ----------
 
@@ -109,10 +109,11 @@ function agentFor(loop: string, r: ModelResult): Actor {
 }
 
 function charge(s: Session, loop: string, r: ModelResult) {
-  const [pi, po] = PRICES[r.provider];
   const [bi, bo] = PRICES.anthropic;
   // Simulated calls are priced as if the routed model had run, so the comparison stays honest.
-  const routedPrice = r.provider === "simulated" ? PRICES[loop === "recap" ? "anthropic" : loop === "verify" ? "anthropic" : "gemini"] : [pi, po];
+  const simulatedPrice =
+    loop === "verify" ? priceOf("anthropic", MODELS.check) : loop === "recap" || loop === "overview" ? PRICES.anthropic : PRICES.gemini;
+  const routedPrice = r.provider === "simulated" ? simulatedPrice : priceOf(r.provider, r.model);
   const usd = (r.inputTokens * routedPrice[0] + r.outputTokens * routedPrice[1]) / 1e6;
   const baselineUsd = (r.inputTokens * bi + r.outputTokens * bo) / 1e6;
   s.ledger.push({
@@ -193,11 +194,19 @@ export async function onUtterance(s: Session, u: Omit<Utterance, "id">) {
 
 type ProposedItem = { kind: Kind; label: string; topic: string; owner?: string; evidence: string[] };
 
+// Recaps read this map, so anything not yet checked must say so.
+const STATUS_NOTE: Record<Status, string> = {
+  proposed: ", not checked yet",
+  verified: "",
+  not_agreed: ", suggested but not agreed",
+  rejected: "",
+};
+
 function mapSummary(s: Session) {
   return s.topics
     .map((t) => {
       const kids = s.items.filter((i) => i.topicId === t.id && i.status !== "rejected");
-      return `- ${t.label}\n${kids.map((k) => `    - (${k.kind}) ${k.label}`).join("\n")}`;
+      return `- ${t.label}\n${kids.map((k) => `    - (${k.kind}${STATUS_NOTE[k.status]}) ${k.label}`).join("\n")}`;
     })
     .join("\n");
 }
@@ -205,35 +214,32 @@ function mapSummary(s: Session) {
 export async function updateMap(s: Session) {
   if (s.busy) return { changed: false, busy: true };
   const fresh = s.utterances.slice(s.mappedUpTo);
-  const pendingItems = s.items.filter((i) => i.status === "proposed");
-  if (!fresh.length && !pendingItems.length) return { changed: false };
+  // A "pending" verdict can only change once someone speaks, so with no new lines there is nothing to map or re-check.
+  if (!fresh.length) return { changed: false };
   s.busy = true;
   try {
-    let added: Item[] = [];
-    if (fresh.length) {
-      const upTo = s.utterances.length;
-      const context = s.utterances.slice(Math.max(0, s.mappedUpTo - 3), s.mappedUpTo);
-      const system =
-        `You maintain a live visual map of a conversation for a neurodivergent participant. ` +
-        `Given the current map and NEW transcript lines, return only additions as JSON: ` +
-        `{"topics": [{"label": string}], "items": [{"kind": "decision"|"action"|"question"|"idea", "label": string, "topic": string, "owner": string|null, "evidence": [utterance ids]}]}. ` +
-        `Rules: topic labels are 2-4 words. Item labels are under 9 words, plain language. ` +
-        `"decision" = something the group is choosing to do. "action" = a task someone took on (owner = that person). ` +
-        `"question" = an open question still unanswered. "idea" = a suggestion. ` +
-        `Every item MUST cite the utterance ids it comes from. "topic" must match an existing or new topic label. ` +
-        `Do not repeat items already on the map. Never add items from this rejected list: ${JSON.stringify(s.rejected)}. ` +
-        `If nothing new, return {"topics": [], "items": []}.`;
-      const user =
-        `Current map:\n${mapSummary(s) || "(empty)"}\n\n` +
-        (context.length ? `Earlier lines (context only):\n${context.map(fmt).join("\n")}\n\n` : "") +
-        `NEW lines:\n${fresh.map(fmt).join("\n")}`;
+    const upTo = s.utterances.length;
+    const context = s.utterances.slice(Math.max(0, s.mappedUpTo - 3), s.mappedUpTo);
+    const system =
+      `You maintain a live visual map of a conversation for a neurodivergent participant. ` +
+      `Given the current map and NEW transcript lines, return only additions as JSON: ` +
+      `{"topics": [{"label": string}], "items": [{"kind": "decision"|"action"|"question"|"idea", "label": string, "topic": string, "owner": string|null, "evidence": [utterance ids]}]}. ` +
+      `Rules: topic labels are 2-4 words. Item labels are under 9 words, plain language. ` +
+      `"decision" = something the group is choosing to do. "action" = a task someone took on (owner = that person). ` +
+      `"question" = an open question still unanswered. "idea" = a suggestion. ` +
+      `Every item MUST cite the utterance ids it comes from. "topic" must match an existing or new topic label. ` +
+      `Do not repeat items already on the map. Never add items from this rejected list: ${JSON.stringify(s.rejected)}. ` +
+      `If nothing new, return {"topics": [], "items": []}.`;
+    const user =
+      `Current map:\n${mapSummary(s) || "(empty)"}\n\n` +
+      (context.length ? `Earlier lines (context only):\n${context.map(fmt).join("\n")}\n\n` : "") +
+      `NEW lines:\n${fresh.map(fmt).join("\n")}`;
 
-      const r = await route(["gemini", "anthropic"], system, user, () => simulateMap(s, fresh));
-      charge(s, "map", r);
-      s.mappedUpTo = upTo;
-      added = applyMapChanges(s, r.json, r);
-      (s as any).lastMapper = r.provider;
-    }
+    const r = await route(["gemini", "anthropic"], system, user, () => simulateMap(s, fresh));
+    charge(s, "map", r);
+    s.mappedUpTo = upTo;
+    const added = applyMapChanges(s, r.json, r);
+    (s as any).lastMapper = r.provider;
     // Verification runs in the background so unverified items visibly show "checking" first.
     startVerify(s);
     return { changed: true, added: added.length };
@@ -243,13 +249,20 @@ export async function updateMap(s: Session) {
 }
 
 function startVerify(s: Session) {
-  if ((s as any).verifying) return;
+  // New lines arrived while a check was running: check again once it finishes.
+  if ((s as any).verifying) return void ((s as any).verifyAgain = true);
   (s as any).verifying = true;
   const delay = s.mode === "demo" ? 1200 : 0;
   setTimeout(() => {
     verify(s)
       .catch((e) => console.warn("[verify]", e))
-      .finally(() => ((s as any).verifying = false));
+      .finally(() => {
+        (s as any).verifying = false;
+        if ((s as any).verifyAgain) {
+          (s as any).verifyAgain = false;
+          startVerify(s);
+        }
+      });
   }, delay);
 }
 
@@ -322,7 +335,8 @@ async function verify(s: Session) {
     `Reasons are under 12 words.`;
   const user = JSON.stringify({ claims }, null, 1);
 
-  const r = await route(order as any, system, user, () => simulateVerify(s, pending));
+  // Checking is a narrow labelling job that runs often, so it uses the small Claude model with little thinking.
+  const r = await route(order as any, system, user, () => simulateVerify(s, pending), { anthropicModel: MODELS.check, effort: "low" });
   charge(s, "verify", r);
   const actor = agentFor("verify", r);
 
@@ -360,7 +374,8 @@ export async function recap(s: Session, sinceIndex?: number) {
     `You help a neurodivergent person catch up on a live conversation in 10 seconds. ` +
     `Return JSON {"cards": [{"icon": "topic"|"decision"|"action"|"question"|"you", "title": string, "text": string}]}. ` +
     `Up to 3 cards, most important first. Titles under 5 words, text under 18 words, plain and calm. ` +
-    `Include a "you" card if anything involves ${s.userName}. Only use facts from the transcript.`;
+    `Include a "you" card if anything involves ${s.userName}. Only use facts from the transcript. ` +
+    `Never present map items marked "not checked yet" or "suggested but not agreed" as decided.`;
   const user = `Map:\n${mapSummary(s) || "(empty)"}\n\nTranscript to recap:\n${lines.map(fmt).join("\n") || "(nothing yet)"}`;
   const r = await route(["anthropic", "gemini"], system, user, () => simulateRecap(s, lines));
   charge(s, "recap", r);
