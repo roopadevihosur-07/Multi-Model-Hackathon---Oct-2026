@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Live Map · Follow every conversation</title>
+  <meta name="description" content="A live, verified visual map of the conversation you're in, so neurodivergent people can take part, not just catch up later." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%238ab4ff%22/%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%226%22 fill=%22%230d1220%22/%3E%3C/svg%3E" />
+</head>
+<body>
+  <!-- ================= LANDING ================= -->
+  <div id="landing" class="view">
+    <header class="nav">
+      <div class="brand"><span class="logo"></span>Live Map</div>
+      <nav>
+        <a href="#how">How it works</a>
+        <a href="#routing">Why routing</a>
+        <a href="#trust">Trust</a>
+        <a href="#pricing">Who it's for</a>
+        <button class="btn btn-primary btn-sm" data-start>Start a session</button>
+      </nav>
+    </header>
+
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Built for ADHD, autism and auditory processing differences</p>
+        <h1>Take part in the conversation, <em>while it's happening.</em></h1>
+        <p class="lede">Meeting tools give you a summary after the meeting. Live Map turns the conversation into a visual map as people talk, checks every decision with a second model, and tells you the moment someone turns to you.</p>
+        <div class="hero-cta">
+          <button class="btn btn-primary" data-start data-mode="demo">▶ Watch the live demo</button>
+          <button class="btn btn-ghost" data-start data-mode="live">🎙 Use my microphone</button>
+        </div>
+        <div class="hero-stats">
+          <div><strong>&lt; 3 s</strong><span>to alert you when you're asked</span></div>
+          <div><strong>2 providers</strong><span>so no model grades its own work</span></div>
+          <div><strong>~$1/hr</strong><span>vs ~$5 with one big model</span></div>
+        </div>
+      </div>
+      <div class="hero-visual" aria-hidden="true">
+        <svg viewBox="0 0 420 360" class="hero-svg">
+          <g class="hv-lines">
+            <path d="M210 180 L95 95" /><path d="M210 180 L330 90" /><path d="M210 180 L320 280" /><path d="M210 180 L90 275" />
+            <path d="M95 95 L40 40" /><path d="M330 90 L392 40" /><path d="M320 280 L392 330" />
+          </g>
+          <circle cx="210" cy="180" r="34" class="hv-root" />
+          <text x="210" y="185" text-anchor="middle" class="hv-root-t">Meeting</text>
+          <g class="hv-node n1"><rect x="45" y="78" width="100" height="34" rx="17" /><text x="95" y="100" text-anchor="middle">Launch date</text></g>
+          <g class="hv-node n2"><rect x="275" y="73" width="110" height="34" rx="17" /><text x="330" y="95" text-anchor="middle">Android crash</text></g>
+          <g class="hv-node n3"><rect x="262" y="263" width="116" height="34" rx="17" /><text x="320" y="285" text-anchor="middle">Onboarding</text></g>
+          <g class="hv-node n4"><rect x="30" y="258" width="120" height="34" rx="17" /><text x="90" y="280" text-anchor="middle">Leadership update</text></g>
+          <g class="hv-chip c1"><rect x="2" y="24" width="86" height="28" rx="8" /><text x="45" y="42" text-anchor="middle">✓ Ship the 24th</text></g>
+          <g class="hv-chip c2"><rect x="340" y="24" width="78" height="28" rx="8" /><text x="379" y="42" text-anchor="middle">☐ Fix crash</text></g>
+          <g class="hv-chip c3 q"><rect x="342" y="316" width="76" height="28" rx="8" /><text x="380" y="334" text-anchor="middle">? Move date</text></g>
+        </svg>
+        <div class="hv-alert">
+          <span class="dot"></span>
+          <div><b>Priya is asking you</b><small>Can you own the leadership update?</small></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="problem">
+      <h2>Fast conversations leave people out</h2>
+      <p class="section-lede">People with ADHD, autism or auditory processing differences lose the thread in fast, overlapping talk, and today's tools only help afterwards.</p>
+      <div class="cards three">
+        <article class="card"><div class="card-icon">🧵</div><h3>Losing the thread</h3><p>Topics jump and overlap. Captions give a wall of text, not the structure of who decided what.</p></article>
+        <article class="card"><div class="card-icon">🙋</div><h3>Missing your moment</h3><p>Someone turns to you, and you realise a second too late that the question was yours.</p></article>
+        <article class="card"><div class="card-icon">⏱</div><h3>Help arrives too late</h3><p>Recordings and AI recaps help you review. Occidental couldn't staff note-takers for about 16% of courses in one year.</p></article>
+      </div>
+    </section>
+
+    <section class="section" id="how">
+      <h2>Five models, each doing the job it's best at</h2>
+      <p class="section-lede">No single model listens in real time, stays fast and cheap, reasons about structure and checks itself. So we route.</p>
+      <ol class="pipeline">
+        <li><span class="step-n">1</span><h3>Listen</h3><p>Deepgram streaming speech-to-text with speaker labels</p><span class="tag">real time</span></li>
+        <li><span class="step-n">2</span><h3>Keep up</h3><p>Gemini Flash-Lite updates the map and spots questions aimed at you</p><span class="tag">fast + cheap</span></li>
+        <li><span class="step-n">3</span><h3>Check</h3><p>DeepSeek, a different provider, verifies every decision and task against the transcript</p><span class="tag">independent</span></li>
+        <li><span class="step-n">4</span><h3>Structure</h3><p>Claude Sonnet writes "catch me up" and "what did I miss" recaps</p><span class="tag">deep reasoning</span></li>
+        <li><span class="step-n">5</span><h3>You decide</h3><p>Tap "that's wrong" to remove anything. Every change is in the audit trail</p><span class="tag">human in control</span></li>
+      </ol>
+    </section>
+
+    <section class="section" id="features">
+      <h2>What you get, live</h2>
+      <div class="cards two">
+        <article class="card feature"><h3>🔔 "They're asking you"</h3><p>A calm banner shows the question and the two lines before it, the moment someone addresses you by name.</p></article>
+        <article class="card feature"><h3>⚡ Catch me up</h3><p>One tap gives a 10-second visual recap of the last few minutes. "What did I miss?" covers the time you looked away.</p></article>
+        <article class="card feature"><h3>✅ A map you can trust</h3><p>Decisions stay grey until a second model confirms them. Ideas nobody agreed to become open questions, not decisions.</p></article>
+        <article class="card feature"><h3>🧭 You stay in control</h3><p>Tap any item to see the exact quote behind it. Mark it wrong and the models won't add it back.</p></article>
+      </div>
+    </section>
+
+    <section class="section" id="routing">
+      <h2>Routing makes it affordable</h2>
+      <p class="section-lede">Sending every job to one strong model costs about 5× more per hour of conversation. The live meter in the app shows the real numbers as you go.</p>
+      <div class="routing">
+        <div class="bars">
+          <div class="bar-row"><span>One strong model</span><div class="bar"><div class="fill big" style="--w:100%"></div></div><b>~$5.00/hr</b></div>
+          <div class="bar-row"><span>Live Map, routed</span><div class="bar"><div class="fill small" style="--w:20%"></div></div><b>~$1.00/hr</b></div>
+        </div>
+        <table class="cost-table">
+          <thead><tr><th>Job</th><th>One model</th><th>Routed</th></tr></thead>
+          <tbody>
+            <tr><td>Speech-to-text + speaker labels</td><td>$0.51</td><td>$0.51</td></tr>
+            <tr><td>Map updates every 30 s</td><td>~$2.90</td><td>~$0.10</td></tr>
+            <tr><td>Deeper restructure</td><td>incl.</td><td>~$0.30</td></tr>
+            <tr><td>Fact-checker</td><td>~$1.60</td><td>~$0.02</td></tr>
+            <tr><td>Catch me up</td><td>incl.</td><td>~$0.10</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="section" id="trust">
+      <h2>Consent and privacy built in</h2>
+      <div class="cards three">
+        <article class="card"><h3>Visible recording</h3><p>A recording badge is always on screen, and sessions can't start until you confirm everyone knows.</p></article>
+        <article class="card"><h3>Evidence for every claim</h3><p>Each decision and task links to the transcript lines it came from.</p></article>
+        <article class="card"><h3>Full audit trail</h3><p>Every map change is recorded against the model or person who made it.</p></article>
+      </div>
+    </section>
+
+    <section class="section" id="pricing">
+      <h2>Sold where accommodations are already paid for</h2>
+      <div class="cards three">
+        <article class="card price"><h3>Employers</h3><p class="amt">$40<span>/seat/mo</span></p><p>A workplace accommodation for meetings. ~15 meeting hours a month, ~60% margin.</p></article>
+        <article class="card price"><h3>Universities</h3><p class="amt">$60–80<span>/student/mo</span></p><p>For disability services offices that already license note-taking tools.</p></article>
+        <article class="card price"><h3>Next</h3><p class="amt">Teams</p><p>Zoom, Teams and Meet integrations, plus a dashboard for accommodation administrators.</p></article>
+      </div>
+    </section>
+
+    <section class="final-cta">
+      <h2>See it build a map in 40 seconds.</h2>
+      <button class="btn btn-primary" data-start data-mode="demo">▶ Start the demo</button>
+    </section>
+    <footer class="foot">Multi Model Hackathon · SF Tech Week 2026 · Hosted on Anbaric</footer>
+  </div>
+
+  <!-- ================= SETUP DIALOG ================= -->
+  <div id="setup" class="modal" hidden>
+    <form class="modal-card" id="setup-form">
+      <h2>Start a session</h2>
+      <label>Your name <small>(we alert you when someone says it)</small>
+        <input name="userName" value="Alex" required />
+      </label>
+      <label>Nicknames <small>(comma separated, optional)</small>
+        <input name="nicknames" placeholder="Al, Lex" />
+      </label>
+      <fieldset class="modes">
+        <legend>Audio</legend>
+        <label class="mode"><input type="radio" name="mode" value="demo" checked /><span><b>Demo conversation</b><small>A scripted 3-person meeting runs through the real models. Best for stage.</small></span></label>
+        <label class="mode"><input type="radio" name="mode" value="live" /><span><b>My microphone</b><small>Live speech-to-text. Use Chrome, and keep the mic close.</small></span></label>
+      </fieldset>
+      <label class="consent"><input type="checkbox" name="consent" required /> Everyone in this conversation knows it is being transcribed.</label>
+      <div class="providers" id="providers"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-close>Cancel</button>
+        <button type="submit" class="btn btn-primary">Start</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ================= SESSION ================= -->
+  <div id="app" class="view" hidden>
+    <header class="topbar">
+      <div class="tb-left">
+        <button class="icon-btn" id="home" title="Back to home">←</button>
+        <span class="rec"><span class="rec-dot"></span>Recording</span>
+        <span class="consent-pill" title="Consent confirmed at start">✓ Consent</span>
+        <span class="timer" id="timer">0:00</span>
+        <span class="mode-pill" id="mode-pill">Demo</span>
+      </div>
+      <div class="cost" id="cost" title="Every model call is priced. 'One model' is what Claude Sonnet doing every job would cost.">
+        <div><small>Routed</small><b id="cost-routed">$0.0000</b></div>
+        <div><small>One model</small><b id="cost-single">$0.0000</b></div>
+        <div class="ratio"><b id="cost-ratio">–</b><small>cheaper</small></div>
+      </div>
+      <div class="tb-right">
+        <button class="btn btn-ghost btn-sm" id="audit-btn">Audit trail</button>
+        <button class="btn btn-ghost btn-sm" id="cost-btn">Routing</button>
+      </div>
+    </header>
+
+    <div id="alert" class="alert" hidden role="alert">
+      <div class="alert-icon">🔔</div>
+      <div class="alert-body">
+        <b id="alert-title">Priya is asking you</b>
+        <p id="alert-q"></p>
+        <div id="alert-ctx" class="alert-ctx"></div>
+        <small id="alert-model"></small>
+      </div>
+      <div class="alert-actions">
+        <button class="btn btn-primary btn-sm" id="alert-catch">Catch me up</button>
+        <button class="btn btn-ghost btn-sm" id="alert-close">Got it</button>
+      </div>
+    </div>
+
+    <main class="workspace">
+      <section class="map-wrap">
+        <div class="legend">
+          <span><i class="lg decision"></i>Decision</span>
+          <span><i class="lg action"></i>Task</span>
+          <span><i class="lg question"></i>Open question</span>
+          <span><i class="lg idea"></i>Idea</span>
+          <span class="lg-status">◌ checking · ✓ verified</span>
+        </div>
+        <div id="map" class="map"><svg id="map-lines" class="map-lines"></svg><div id="map-nodes"></div>
+          <div id="map-empty" class="map-empty"><div class="pulse"></div><p>Listening… the map will grow as people talk.</p></div>
+        </div>
+        <div id="correct-hint" class="correct-hint" hidden>Tap the item that's wrong · <button id="correct-cancel">cancel</button></div>
+      </section>
+      <aside class="transcript">
+        <h3>Transcript <small id="stt-label"></small></h3>
+        <div id="lines" class="lines"></div>
+        <div id="typing" class="typing" hidden><span></span><span></span><span></span></div>
+      </aside>
+    </main>
+
+    <footer class="dock">
+      <div class="dock-left">
+        <button class="btn btn-primary" id="play">▶ Play demo conversation</button>
+        <button class="btn btn-ghost" id="mic" hidden>🎙 Start listening</button>
+        <span class="status" id="status"></span>
+      </div>
+      <div class="dock-right">
+        <button class="btn btn-soft" id="catchup">⚡ Catch me up</button>
+        <button class="btn btn-soft" id="missed">🕒 What did I miss?</button>
+        <button class="btn btn-soft danger" id="wrong">✕ That's wrong</button>
+      </div>
+    </footer>
+
+    <div id="recap" class="drawer" hidden>
+      <div class="drawer-head"><h3 id="recap-title">Catch me up</h3><button class="icon-btn" data-close-drawer>✕</button></div>
+      <div id="recap-cards" class="recap-cards"></div>
+      <small id="recap-meta" class="meta"></small>
+    </div>
+
+    <div id="audit" class="drawer" hidden>
+      <div class="drawer-head"><h3>Audit trail</h3><button class="icon-btn" data-close-drawer>✕</button></div>
+      <p class="meta">Every change is recorded against the person or model that made it.</p>
+      <ol id="audit-list" class="audit-list"></ol>
+    </div>
+
+    <div id="routing-panel" class="drawer" hidden>
+      <div class="drawer-head"><h3>Model routing</h3><button class="icon-btn" data-close-drawer>✕</button></div>
+      <p class="meta">Each job goes to the cheapest model that does it well. Costs are from this session's real token counts.</p>
+      <div id="routing-list"></div>
+    </div>
+
+    <div id="popover" class="popover" hidden></div>
+  </div>
+
+  <script src="app.js" type="module"></script>
+</body>
+</html>

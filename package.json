@@ -1,0 +1,17 @@
+{
+  "name": "live-map",
+  "version": "1.0.0",
+  "description": "Live Conversation Map: a live, verified visual map of a conversation, built with multiple models.",
+  "type": "module",
+  "main": "src/main.ts",
+  "scripts": {
+    "start": "tsx src/main.ts",
+    "dev": "tsx watch src/main.ts"
+  },
+  "dependencies": {
+    "tsx": "^4.20.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
