@@ -1,4 +1,4 @@
-# Live Map
+# dottie
 
 A live, verified visual map of the conversation you're in, so neurodivergent people can take part while it happens, not just catch up afterwards.
 
@@ -10,6 +10,7 @@ Built for the Multi Model Hackathon, SF Tech Week 2026.
 npm install
 cp .env.example .env     # add whichever keys you have
 npm start                # http://localhost:3000
+npm test                 # end-to-end test: starts the server and runs the demo meeting
 ```
 
 No keys? It still runs end to end in **simulated mode**, using local rules in place of the models, so the demo never breaks.
@@ -47,6 +48,7 @@ If a provider's key is missing or a call fails, the router falls back to the nex
 - `src/demo.ts`: the scripted demo meeting.
 - `public/`: landing page and live session UI (plain JS, no build step).
 - `docs/decisions/`: ADRs that Prelint reviews pull requests against.
+- `DESIGN.md`: the visual and interaction system (calm by default, one alarm, human confirms decisions).
 
 ## Deploy on Anbaric
 

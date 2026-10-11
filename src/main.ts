@@ -14,7 +14,7 @@ if (existsSync(envPath)) {
   }
 }
 
-const { createSession, getSession, onUtterance, updateMap, recap, correct, view } = await import("./pipeline.ts");
+const { createSession, getSession, onUtterance, updateMap, recap, overview, correct, confirm, keep, view } = await import("./pipeline.ts");
 const { providerStatus, deepgramToken, MODELS } = await import("./models.ts");
 const { DEMO_SCRIPT, DEMO_SPEAKERS } = await import("./demo.ts");
 
@@ -100,6 +100,21 @@ async function api(req: IncomingMessage, res: ServerResponse, path: string, url:
     const s = session(res, b.sessionId);
     if (!s) return;
     return send(res, 200, await recap(s, typeof b.sinceIndex === "number" ? b.sinceIndex : undefined));
+  }
+
+  if (path === "overview" && method === "POST") {
+    const b = await body(req);
+    const s = session(res, b.sessionId);
+    if (!s) return;
+    return send(res, 200, await overview(s));
+  }
+
+  if ((path === "confirm" || path === "keep") && method === "POST") {
+    const b = await body(req);
+    const s = session(res, b.sessionId);
+    if (!s) return;
+    const ok = path === "confirm" ? confirm(s, String(b.itemId)) : keep(s, String(b.itemId));
+    return send(res, ok ? 200 : 400, { session: view(s) });
   }
 
   if (path === "correct" && method === "POST") {

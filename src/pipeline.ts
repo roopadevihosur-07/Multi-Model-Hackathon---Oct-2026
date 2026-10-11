@@ -19,6 +19,8 @@ export type Item = {
   status: Status;
   verifiedBy?: string;
   reason?: string;
+  confirmedBy?: string; // a person confirmed this decision
+  kept?: boolean; // a person kept an item flagged "not sure"
   createdAt: number;
 };
 
@@ -35,6 +37,7 @@ export type CostEvent = {
   usd: number;
   baselineUsd: number; // what one strong model doing this job would cost
   ms: number;
+  fallbackFrom: string[]; // providers that failed before this one answered
 };
 
 export type Alert = { id: string; question: string; askedBy: string; context: string[]; at: number; provider: string };
@@ -98,6 +101,7 @@ const AGENT_NAMES: Record<string, string> = {
   map: "Mapper",
   verify: "Verifier",
   recap: "Recap writer",
+  overview: "Overview writer",
 };
 
 function agentFor(loop: string, r: ModelResult): Actor {
@@ -121,6 +125,7 @@ function charge(s: Session, loop: string, r: ModelResult) {
     usd,
     baselineUsd,
     ms: r.ms,
+    fallbackFrom: r.fallbackFrom ?? [],
   });
 }
 
@@ -354,7 +359,7 @@ export async function recap(s: Session, sinceIndex?: number) {
   const system =
     `You help a neurodivergent person catch up on a live conversation in 10 seconds. ` +
     `Return JSON {"cards": [{"icon": "topic"|"decision"|"action"|"question"|"you", "title": string, "text": string}]}. ` +
-    `3 to 5 cards, most important first. Titles under 5 words, text under 18 words, plain and calm. ` +
+    `Up to 3 cards, most important first. Titles under 5 words, text under 18 words, plain and calm. ` +
     `Include a "you" card if anything involves ${s.userName}. Only use facts from the transcript.`;
   const user = `Map:\n${mapSummary(s) || "(empty)"}\n\nTranscript to recap:\n${lines.map(fmt).join("\n") || "(nothing yet)"}`;
   const r = await route(["anthropic", "gemini", "deepseek"], system, user, () => simulateRecap(s, lines));
@@ -363,7 +368,113 @@ export async function recap(s: Session, sinceIndex?: number) {
   return { cards: r.json?.cards ?? [], provider: `${r.provider}/${r.model}`, lines: lines.length };
 }
 
+// ---------- 4b. Overview: how the meeting flowed, for someone who was only half listening ----------
+
+export type Stage = {
+  n: number;
+  topic: string;
+  summary: string;
+  speakers: string[];
+  lines: number;
+  fromId: string;
+  toId: string;
+  points: { id: string; kind: Kind; label: string; status: Status; owner?: string }[];
+};
+
+// Stages are the map's topics in the order the conversation reached them.
+function buildStages(s: Session): Stage[] {
+  const order = (t: Topic) => {
+    const idx = s.items
+      .filter((i) => i.topicId === t.id && i.status !== "rejected")
+      .flatMap((i) => i.evidence.map((id) => s.utterances.findIndex((u) => u.id === id)))
+      .filter((n) => n >= 0);
+    return idx.length ? Math.min(...idx) : Number.MAX_SAFE_INTEGER;
+  };
+  return s.topics
+    .filter((t) => s.items.some((i) => i.topicId === t.id && i.status !== "rejected"))
+    .map((t) => ({ t, at: order(t) }))
+    .sort((a, b) => a.at - b.at)
+    .map(({ t }, k) => {
+      const points = s.items
+        .filter((i) => i.topicId === t.id && i.status !== "rejected")
+        .map((i) => ({ id: i.id, kind: i.kind, label: i.label, status: i.status, owner: i.owner }));
+      const ids = s.items.filter((i) => i.topicId === t.id).flatMap((i) => i.evidence);
+      const idx = ids.map((id) => s.utterances.findIndex((u) => u.id === id)).filter((n) => n >= 0);
+      const lo = idx.length ? Math.min(...idx) : 0;
+      const hi = idx.length ? Math.max(...idx) : -1;
+      const span = hi >= 0 ? s.utterances.slice(lo, hi + 1) : [];
+      const speakers = [...new Set(span.map((u) => u.speaker))];
+      const first = span[0];
+      const last = span.at(-1);
+      return {
+        n: k + 1,
+        topic: t.label,
+        summary: first && last && first !== last ? `${first.speaker}: ${first.text} … ${last.speaker}: ${last.text}` : first ? `${first.speaker}: ${first.text}` : "Mentioned briefly.",
+        speakers,
+        lines: span.length,
+        fromId: first?.id ?? "",
+        toId: last?.id ?? "",
+        points,
+      };
+    });
+}
+
+export async function overview(s: Session) {
+  const stages = buildStages(s);
+  const recent = s.utterances.slice(-120);
+  if (!s.utterances.length) return { stages: [], now: "Nothing has been said yet.", provider: "none" };
+  const last = s.utterances.at(-1)!;
+  const waiting = s.alerts.at(-1);
+  const system =
+    `You explain a live meeting to a person who was only half listening, so they can join in. ` +
+    `Return JSON {"stages": [{"topic": string, "summary": string}], "now": string}. ` +
+    `One stage per topic given, in the same order, using the same topic label. ` +
+    `"summary" is under 25 words, plain and calm, using only facts from the transcript. ` +
+    `"now" is under 30 words: where the conversation stands right now and what is still open. ` +
+    `If anything involves ${s.userName}, say so in "now".`;
+  const user =
+    `Topics in order:\n${stages.map((g) => `- ${g.topic}`).join("\n") || "(none yet)"}\n\n` +
+    `Transcript:\n${recent.map(fmt).join("\n")}`;
+  const r = await route(["anthropic", "gemini", "deepseek"], system, user, () => simulateOverview(s, stages, last, waiting));
+  charge(s, "overview", r);
+  audit(s, agentFor("overview", r), "overview", `${stages.length} stages explained`);
+
+  const written = new Map<string, string>();
+  for (const g of r.json?.stages ?? []) if (g?.topic && g?.summary) written.set(String(g.topic).toLowerCase(), String(g.summary));
+  const out = stages.map((g) => ({ ...g, summary: written.get(g.topic.toLowerCase()) ?? g.summary }));
+  return {
+    stages: out,
+    now: String(r.json?.now || `${last.speaker}: ${last.text}`),
+    provider: `${r.provider}/${r.model}`,
+  };
+}
+
+function simulateOverview(s: Session, stages: Stage[], last: Utterance, waiting?: Alert) {
+  const now = waiting
+    ? `${waiting.askedBy} asked ${s.userName}: ${waiting.question}`
+    : `Latest: ${last.speaker} said "${last.text}"`;
+  return { stages: stages.map((g) => ({ topic: g.topic, summary: g.summary })), now };
+}
+
 // ---------- 5. Human control ----------
+
+// A person confirms a decision the models have verified. Only decisions need this.
+export function confirm(s: Session, itemId: string) {
+  const item = s.items.find((i) => i.id === itemId);
+  if (!item || item.kind !== "decision" || item.status !== "verified") return false;
+  item.confirmedBy = s.userName;
+  audit(s, { type: "human", name: s.userName }, "confirmed", item.label);
+  return true;
+}
+
+// A person keeps an item the checker was not sure about.
+export function keep(s: Session, itemId: string) {
+  const item = s.items.find((i) => i.id === itemId);
+  if (!item) return false;
+  item.kept = true;
+  audit(s, { type: "human", name: s.userName }, "kept", item.label);
+  return true;
+}
 
 export function correct(s: Session, itemId: string) {
   const item = s.items.find((i) => i.id === itemId);
@@ -406,6 +517,59 @@ export function costView(s: Session) {
   };
 }
 
+// ---------- Evals: which model ran, how often, and what it cost ----------
+
+export function usageView(s: Session) {
+  const models = new Map<string, { key: string; provider: string; model: string; calls: number; inputTokens: number; outputTokens: number; usd: number; ms: number; fallbacks: number; roles: Record<string, number> }>();
+  const failures: Record<string, number> = {};
+  const roles = new Map<string, number>();
+  let inputTokens = 0;
+  let outputTokens = 0;
+  let usd = 0;
+  let ms = 0;
+  let fallbacks = 0;
+  for (const e of s.ledger) {
+    const key = `${e.provider}/${e.model}`;
+    const m = models.get(key) ?? { key, provider: e.provider, model: e.model, calls: 0, inputTokens: 0, outputTokens: 0, usd: 0, ms: 0, fallbacks: 0, roles: {} };
+    m.calls++;
+    m.inputTokens += e.inputTokens;
+    m.outputTokens += e.outputTokens;
+    m.usd += e.usd;
+    m.ms += e.ms;
+    m.roles[e.loop] = (m.roles[e.loop] ?? 0) + 1;
+    if (e.fallbackFrom.length) {
+      m.fallbacks++;
+      fallbacks++;
+    }
+    models.set(key, m);
+    for (const f of e.fallbackFrom) failures[f] = (failures[f] ?? 0) + 1;
+    roles.set(e.loop, (roles.get(e.loop) ?? 0) + 1);
+    inputTokens += e.inputTokens;
+    outputTokens += e.outputTokens;
+    usd += e.usd;
+    ms += e.ms;
+  }
+  const calls = s.ledger.length;
+  return {
+    calls,
+    inputTokens,
+    outputTokens,
+    usd,
+    avgMs: calls ? ms / calls : 0,
+    fallbacks,
+    failures,
+    models: [...models.values()]
+      .map((m) => ({ ...m, share: calls ? m.calls / calls : 0, avgMs: m.ms / m.calls }))
+      .sort((a, b) => b.calls - a.calls),
+    roles: [...roles.entries()].map(([loop, total]) => ({ loop, total })),
+    // Calls per job per model, for the job-by-model table.
+    matrix: [...roles.keys()].map((loop) => ({
+      loop,
+      byModel: Object.fromEntries([...models.values()].filter((m) => m.roles[loop]).map((m) => [m.key, m.roles[loop]])),
+    })),
+  };
+}
+
 export function view(s: Session) {
   return {
     id: s.id,
@@ -417,6 +581,7 @@ export function view(s: Session) {
     removed: s.items.filter((i) => i.status === "rejected"),
     alerts: s.alerts,
     cost: costView(s),
+    usage: usageView(s),
     audit: s.audit.slice(-60),
   };
 }
@@ -502,5 +667,5 @@ function simulateRecap(s: Session, lines: Utterance[]) {
   for (const a of recent.filter((i) => i.kind === "action").slice(0, 1)) cards.push({ icon: "action", title: "To do", text: a.label });
   for (const q of recent.filter((i) => i.kind === "question").slice(0, 1)) cards.push({ icon: "question", title: "Still open", text: q.label });
   if (!cards.length) cards.push({ icon: "topic", title: "Just started", text: "Nothing major yet. The conversation is warming up." });
-  return { cards: cards.slice(0, 5) };
+  return { cards: cards.slice(0, 3) };
 }

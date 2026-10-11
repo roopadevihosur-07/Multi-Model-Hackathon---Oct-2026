@@ -6,7 +6,8 @@
   "main": "src/main.ts",
   "scripts": {
     "start": "tsx src/main.ts",
-    "dev": "tsx watch src/main.ts"
+    "dev": "tsx watch src/main.ts",
+    "test": "node --import tsx --test tests/e2e.test.ts"
   },
   "dependencies": {
     "tsx": "^4.20.0"
