@@ -370,6 +370,28 @@ button.node:focus-visible, button.model:focus-visible { outline: 3px solid var(-
 /* Steps joined by a dotted line */
 .steps li { position: relative; }
 .steps li:not(:last-child)::after { content: ""; position: absolute; left: 35px; top: 60px; bottom: -14px; border-left: 2px dotted var(--stitch); }
+/* From speech to map: sentence path and whole-conversation matrix */
+.chips { display: flex; gap: 10px; flex-wrap: wrap; margin: 14px 0 20px; }
+.chip { font: 700 15px var(--body); color: var(--ink); background: var(--patch); border: 0; border-radius: 999px; padding: 9px 16px; cursor: pointer; outline: 1.5px dotted var(--stitch); outline-offset: -2px; transition: background .2s ease, color .2s ease; }
+.chip[aria-pressed="true"] { background: var(--ink); color: #fff; outline: none; }
+.chip:focus-visible { outline: 3px solid var(--indigo); outline-offset: 3px; }
+.lanes { display: flex; align-items: stretch; gap: 10px; flex-wrap: wrap; }
+.lanes .arrow { align-self: center; }
+.lane { flex: 1 1 190px; min-width: 0; background: var(--patch); border-radius: 18px; padding: 16px 18px; display: grid; gap: 8px; align-content: start; outline: 2px dotted var(--stitch); outline-offset: -8px; }
+.lane.flash { animation: laneFlash .8s ease-out; }
+.lane b { font-family: var(--display); font-size: 18px; }
+.lane p { margin: 0; font-size: 15px; line-height: 1.4; color: var(--ink-soft); min-height: 5.6em; }
+@keyframes laneFlash { from { box-shadow: 0 0 0 5px rgba(51, 70, 201, .18); } to { box-shadow: none; } }
+#story h3 { margin-top: 40px; }
+.matrix-wrap { overflow-x: auto; margin-top: 12px; }
+.matrix { border-collapse: separate; border-spacing: 6px; width: 100%; min-width: 760px; font-size: 14px; }
+.matrix th, .matrix td { background: var(--patch); border-radius: 12px; padding: 10px 10px; text-align: left; vertical-align: top; }
+.matrix thead th { color: var(--ink-soft); font-weight: 700; }
+.matrix tbody th { font-family: var(--display); font-size: 16px; color: var(--ink); }
+.matrix td { color: var(--ink); }
+.matrix td.on { color: var(--indigo); font-weight: 700; }
+.matrix td.ask { color: var(--ink-soft); }
+.matrix td.none { color: #B9BFD3; }
 @media (prefers-reduced-motion: reduce) {
   .lockup .mark path { stroke-dashoffset: 0; }
   .js .reveal:not(.in) { opacity: 1; transform: none; }

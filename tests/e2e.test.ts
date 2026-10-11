@@ -10,7 +10,7 @@ const BASE = `http://localhost:${PORT}`;
 let server: ChildProcess;
 
 // Blank keys so the server starts in simulated mode, and skip any local .env file so real keys do not leak in.
-const NO_KEYS = { GEMINI_API_KEY: "", DEEPSEEK_API_KEY: "", ANTHROPIC_API_KEY: "", DEEPGRAM_API_KEY: "", LIVE_MAP_SKIP_ENV: "1" };
+const NO_KEYS = { GEMINI_API_KEY: "", ANTHROPIC_API_KEY: "", DEEPGRAM_API_KEY: "", LIVE_MAP_SKIP_ENV: "1" };
 
 before(async () => {
   server = spawn(process.execPath, ["--import", "tsx", fileURLToPath(new URL("../src/main.ts", import.meta.url))], {
@@ -50,7 +50,7 @@ test("serves the landing page and static assets", async () => {
 
 test("reports simulated mode when no keys are set", async () => {
   const { data } = await api("status");
-  assert.deepEqual(data.providers, { gemini: false, deepseek: false, anthropic: false, deepgram: false });
+  assert.deepEqual(data.providers, { gemini: false, anthropic: false, deepgram: false });
 });
 
 test("demo meeting: alert, verification, downgrade, recap and correction", async () => {

@@ -2,7 +2,7 @@
 // If a provider's key is missing, the router falls back to the next provider for that role,
 // and finally to a local "simulated" mode so the demo always runs end to end.
 
-export type Provider = "gemini" | "deepseek" | "anthropic" | "simulated";
+export type Provider = "gemini" | "anthropic" | "simulated";
 
 export type ModelResult = {
   json: any;
@@ -17,21 +17,18 @@ const env = process.env;
 
 export const MODELS = {
   gemini: env.GEMINI_MODEL || "gemini-3.5-flash-lite",
-  deepseek: env.DEEPSEEK_MODEL || "deepseek-chat",
   anthropic: env.ANTHROPIC_MODEL || "claude-sonnet-5-5",
 };
 
 // USD per million tokens [input, output]
 export const PRICES: Record<string, [number, number]> = {
   gemini: [0.1, 0.4],
-  deepseek: [0.14, 0.28],
   anthropic: [3, 15],
   simulated: [0, 0],
 };
 
 export function hasKey(p: Provider): boolean {
   if (p === "gemini") return !!env.GEMINI_API_KEY;
-  if (p === "deepseek") return !!env.DEEPSEEK_API_KEY;
   if (p === "anthropic") return !!env.ANTHROPIC_API_KEY;
   return true;
 }
@@ -39,7 +36,6 @@ export function hasKey(p: Provider): boolean {
 export function providerStatus() {
   return {
     gemini: hasKey("gemini"),
-    deepseek: hasKey("deepseek"),
     anthropic: hasKey("anthropic"),
     deepgram: !!env.DEEPGRAM_API_KEY,
   };
@@ -100,32 +96,6 @@ async function callGemini(system: string, user: string): Promise<ModelResult> {
   };
 }
 
-async function callDeepSeek(system: string, user: string): Promise<ModelResult> {
-  const t0 = Date.now();
-  const model = MODELS.deepseek;
-  const data = await post(
-    "https://api.deepseek.com/chat/completions",
-    { authorization: `Bearer ${env.DEEPSEEK_API_KEY}` },
-    {
-      model,
-      temperature: 0.1,
-      response_format: { type: "json_object" },
-      messages: [
-        { role: "system", content: system },
-        { role: "user", content: user },
-      ],
-    },
-  );
-  return {
-    json: parseJson(data?.choices?.[0]?.message?.content ?? ""),
-    provider: "deepseek",
-    model,
-    inputTokens: data?.usage?.prompt_tokens ?? 0,
-    outputTokens: data?.usage?.completion_tokens ?? 0,
-    ms: Date.now() - t0,
-  };
-}
-
 async function callAnthropic(system: string, user: string): Promise<ModelResult> {
   const t0 = Date.now();
   const model = MODELS.anthropic;
@@ -152,7 +122,6 @@ async function callAnthropic(system: string, user: string): Promise<ModelResult>
 
 const CALLERS: Record<Exclude<Provider, "simulated">, (s: string, u: string) => Promise<ModelResult>> = {
   gemini: callGemini,
-  deepseek: callDeepSeek,
   anthropic: callAnthropic,
 };
 

@@ -69,11 +69,10 @@ async function openSetup(mode) {
   try {
     const st = await api("status");
     const p = st.providers;
-    const any = p.gemini || p.deepseek || p.anthropic;
+    const any = p.gemini || p.anthropic;
     $("#providers").innerHTML =
       [
         ["Gemini", p.gemini],
-        ["DeepSeek", p.deepseek],
         ["Claude", p.anthropic],
         ["Deepgram", p.deepgram],
       ]
@@ -531,7 +530,7 @@ function renderOverview(o) {
 
 // ---------------- Evals ----------------
 const MODEL_NAME = (key) => (key === "simulated/local-rules" ? "Local rules (no model)" : key.replace("/", " · "));
-const PROVIDER_NAME = { gemini: "Gemini", deepseek: "DeepSeek", anthropic: "Claude", simulated: "Local" };
+const PROVIDER_NAME = { gemini: "Gemini", anthropic: "Claude", simulated: "Local" };
 
 function renderEvals(s) {
   const u = s.usage;

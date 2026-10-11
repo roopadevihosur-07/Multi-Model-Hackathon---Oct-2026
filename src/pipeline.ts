@@ -112,7 +112,7 @@ function charge(s: Session, loop: string, r: ModelResult) {
   const [pi, po] = PRICES[r.provider];
   const [bi, bo] = PRICES.anthropic;
   // Simulated calls are priced as if the routed model had run, so the comparison stays honest.
-  const routedPrice = r.provider === "simulated" ? PRICES[loop === "recap" ? "anthropic" : loop === "verify" ? "deepseek" : "gemini"] : [pi, po];
+  const routedPrice = r.provider === "simulated" ? PRICES[loop === "recap" ? "anthropic" : loop === "verify" ? "anthropic" : "gemini"] : [pi, po];
   const usd = (r.inputTokens * routedPrice[0] + r.outputTokens * routedPrice[1]) / 1e6;
   const baselineUsd = (r.inputTokens * bi + r.outputTokens * bo) / 1e6;
   s.ledger.push({
@@ -168,7 +168,7 @@ export async function onUtterance(s: Session, u: Omit<Utterance, "id">) {
     `"question" is a short, plain restatement of what they are being asked, under 20 words.`;
   const user = `Recent conversation:\n${recent.map(fmt).join("\n")}\n\nIs the LAST line addressing ${s.userName}?`;
 
-  const r = await route(["gemini", "deepseek", "anthropic"], system, user, () => ({
+  const r = await route(["gemini", "anthropic"], system, user, () => ({
     addressed: true,
     question: utt.text.replace(new RegExp(`^${s.userName},?\\s*`, "i"), ""),
     askedBy: utt.speaker,
@@ -228,7 +228,7 @@ export async function updateMap(s: Session) {
         (context.length ? `Earlier lines (context only):\n${context.map(fmt).join("\n")}\n\n` : "") +
         `NEW lines:\n${fresh.map(fmt).join("\n")}`;
 
-      const r = await route(["gemini", "deepseek", "anthropic"], system, user, () => simulateMap(s, fresh));
+      const r = await route(["gemini", "anthropic"], system, user, () => simulateMap(s, fresh));
       charge(s, "map", r);
       s.mappedUpTo = upTo;
       added = applyMapChanges(s, r.json, r);
@@ -302,7 +302,7 @@ async function verify(s: Session) {
   const pending = s.items.filter((i) => i.status === "proposed");
   if (!pending.length) return;
   const mapper = (s as any).lastMapper as string | undefined;
-  const order = (["deepseek", "anthropic", "gemini"] as const).filter((p) => p !== mapper);
+  const order = (["anthropic", "gemini"] as const).filter((p) => p !== mapper);
   if (mapper && mapper !== "simulated") order.push(mapper as any);
 
   const claims = pending.map((i) => {
@@ -362,7 +362,7 @@ export async function recap(s: Session, sinceIndex?: number) {
     `Up to 3 cards, most important first. Titles under 5 words, text under 18 words, plain and calm. ` +
     `Include a "you" card if anything involves ${s.userName}. Only use facts from the transcript.`;
   const user = `Map:\n${mapSummary(s) || "(empty)"}\n\nTranscript to recap:\n${lines.map(fmt).join("\n") || "(nothing yet)"}`;
-  const r = await route(["anthropic", "gemini", "deepseek"], system, user, () => simulateRecap(s, lines));
+  const r = await route(["anthropic", "gemini"], system, user, () => simulateRecap(s, lines));
   charge(s, "recap", r);
   audit(s, agentFor("recap", r), "recap", `${(r.json?.cards ?? []).length} cards covering ${lines.length} lines`);
   return { cards: r.json?.cards ?? [], provider: `${r.provider}/${r.model}`, lines: lines.length };
@@ -435,7 +435,7 @@ export async function overview(s: Session) {
   const user =
     `Topics in order:\n${stages.map((g) => `- ${g.topic}`).join("\n") || "(none yet)"}\n\n` +
     `Transcript:\n${recent.map(fmt).join("\n")}`;
-  const r = await route(["anthropic", "gemini", "deepseek"], system, user, () => simulateOverview(s, stages, last, waiting));
+  const r = await route(["anthropic", "gemini"], system, user, () => simulateOverview(s, stages, last, waiting));
   charge(s, "overview", r);
   audit(s, agentFor("overview", r), "overview", `${stages.length} stages explained`);
 

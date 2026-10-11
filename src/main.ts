@@ -162,7 +162,7 @@ server.listen(port, () => {
   const p = providerStatus();
   console.log(`Live Conversation Map running on http://localhost:${port}`);
   console.log(
-    `Providers: gemini=${p.gemini ? "on" : "off"} deepseek=${p.deepseek ? "on" : "off"} anthropic=${p.anthropic ? "on" : "off"} deepgram=${p.deepgram ? "on" : "off"}` +
-      (!p.gemini && !p.deepseek && !p.anthropic ? "  (no model keys: running in simulated mode)" : ""),
+    `Providers: gemini=${p.gemini ? "on" : "off"} anthropic=${p.anthropic ? "on" : "off"} deepgram=${p.deepgram ? "on" : "off"}` +
+      (!p.gemini && !p.anthropic ? "  (no model keys: running in simulated mode)" : ""),
   );
 });

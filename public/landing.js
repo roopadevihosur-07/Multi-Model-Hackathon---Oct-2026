@@ -32,3 +32,25 @@ if ("IntersectionObserver" in window && !matchMedia("(prefers-reduced-motion: re
 } else {
   reveals.forEach((el) => el.classList.add("in"));
 }
+
+// From speech to map: pick a sentence to see its path through the models.
+const lanes = document.querySelector(".lanes");
+if (lanes) {
+  const story = [
+    { speech: "Speaker 1 · 0:12 · “Can we move the launch to Friday?”", map: "Topic “Launch timing”, with a question card that cites this line.", check: "Not checked. Questions are not decisions or tasks, so it stays an open question.", recap: "“Open question: can the launch move to Friday?”" },
+    { speech: "Speaker 2 · 0:18 · “Let's go with Friday. I'll send the update.”", map: "A decision “Launch on Friday” and a task “Speaker 2 sends the update”.", check: "Pending until someone else responds. Supported once the transcript backs it.", recap: "“Friday launch agreed to. Speaker 2 sends the update.”" },
+    { speech: "Speaker 3 · 0:25 · “Maybe we move it to the 31st.”", map: "A proposed decision “Move the launch to the 31st”.", check: "Not agreed. Nobody agreed, so it is downgraded, not verified.", recap: "“Moving the launch to the 31st was floated. Not agreed.”" },
+  ];
+  const picks = document.querySelectorAll("[data-pick]");
+  const show = (i) => {
+    picks.forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.pick === String(i))));
+    lanes.querySelectorAll("[data-lane]").forEach((p) => (p.textContent = story[i][p.dataset.lane]));
+    lanes.querySelectorAll(".lane").forEach((l) => {
+      l.classList.remove("flash");
+      void l.offsetWidth;
+      l.classList.add("flash");
+    });
+  };
+  picks.forEach((b) => b.addEventListener("click", () => show(b.dataset.pick)));
+  show(0);
+}
