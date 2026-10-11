@@ -143,7 +143,7 @@ function startSession(s) {
   show("app");
   render(s);
 
-  const mapEvery = s.mode === "demo" ? 7000 : 15000;
+  const mapEvery = s.mode === "demo" ? 7000 : 4000;
   state.timers.push(setInterval(tickTimer, 500));
   state.timers.push(setInterval(runMapUpdate, mapEvery));
   state.timers.push(setInterval(poll, 2000));
@@ -269,7 +269,7 @@ $("#play").addEventListener("click", async () => {
     await sleep((line.seconds * 1000) / speed);
     $("#typing").hidden = true;
     if (!state.playing) return;
-    await sendUtterance({ speaker: line.speaker, text: line.text, start: t, end: t + line.seconds });
+    await sendUtterance({ speaker: line.speaker, text: line.text, start: t, end: t + line.seconds, engine: "demo" });
     t += line.seconds + 0.4;
   }
   state.demoDone = true;
@@ -334,7 +334,7 @@ async function startDeepgram(token) {
     const counts = {};
     for (const w of alt.words ?? []) counts[w.speaker ?? 0] = (counts[w.speaker ?? 0] ?? 0) + 1;
     const sp = Number(Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? 0);
-    sendUtterance({ speaker: `Speaker ${sp + 1}`, text, start: d.start, end: d.start + d.duration });
+    sendUtterance({ speaker: `Speaker ${sp + 1}`, text, start: d.start, end: d.start + d.duration, engine: "deepgram", confidence: alt.confidence });
   };
   ws.onerror = () => setStatus("Deepgram connection error. Try the demo conversation.");
   ws.onclose = () => clearInterval(keepAlive);
@@ -354,7 +354,7 @@ function startBrowserSpeech(SR) {
       const text = e.results[i][0].transcript.trim();
       if (!text) continue;
       const now = (Date.now() - t0) / 1000;
-      sendUtterance({ speaker: "Speaker", text: text[0].toUpperCase() + text.slice(1), start: Math.max(0, now - 3), end: now });
+      sendUtterance({ speaker: "Speaker", text: text[0].toUpperCase() + text.slice(1), start: Math.max(0, now - 3), end: now, engine: "browser" });
     }
   };
   r.onend = () => alive && r.start();
@@ -482,7 +482,7 @@ function setTab(name) {
   $("#evals").hidden = name !== "evals";
   if (name === "map") drawThread();
   if (name === "overview") loadOverview();
-  if (name === "evals" && state.session) renderEvals(state.session.usage);
+  if (name === "evals" && state.session) renderEvals(state.session);
 }
 $$(".tab").forEach((t) => t.addEventListener("click", () => state.session && setTab(t.dataset.tab)));
 window.addEventListener("resize", () => state.session && state.tab === "map" && drawThread());
@@ -533,7 +533,11 @@ function renderOverview(o) {
 const MODEL_NAME = (key) => (key === "simulated/local-rules" ? "Local rules (no model)" : key.replace("/", " · "));
 const PROVIDER_NAME = { gemini: "Gemini", deepseek: "DeepSeek", anthropic: "Claude", simulated: "Local" };
 
-function renderEvals(u) {
+function renderEvals(s) {
+  const u = s.usage;
+  const sp = s.speech;
+  $("#ev-stt-min").textContent = `${sp.minutes.toFixed(2)} min`;
+  $("#ev-stt-usd").textContent = money(sp.usd);
   $("#ev-calls").textContent = u.calls;
   $("#ev-tokens").textContent = `${u.inputTokens.toLocaleString()} / ${u.outputTokens.toLocaleString()}`;
   $("#ev-usd").textContent = money(u.usd);
@@ -563,6 +567,40 @@ function renderEvals(u) {
           .join("")}<td>${u.roles.find((r) => r.loop === row.loop)?.total ?? 0}</td></tr>`)
         .join("") + "</tbody>"
     : "";
+
+  const ENGINE_NAME = {
+    deepgram: "Deepgram nova-3 · speaker labels",
+    browser: "Chrome speech · free, no speaker labels",
+    demo: "Scripted demo · no speech service",
+  };
+  $("#ev-speech").innerHTML = sp.lines
+    ? `<thead><tr><th>Engine</th><th>Lines</th><th>Audio time</th><th>Avg confidence</th><th>Spend</th></tr></thead><tbody>` +
+      sp.engines
+        .map((e) => `<tr>
+          <td><b>${esc(ENGINE_NAME[e.engine] ?? e.engine)}</b></td>
+          <td>${e.lines}</td>
+          <td>${e.seconds.toFixed(1)} s</td>
+          <td>${e.avgConfidence == null ? "–" : `${Math.round(e.avgConfidence * 100)}%`}</td>
+          <td>${money(e.usd)}</td>
+        </tr>`)
+        .join("") + "</tbody>"
+    : `<tbody><tr><td class="m">No speech yet. Use live mode to see speech usage.</td></tr></tbody>`;
+
+  const clock = (t) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
+  $("#ev-stt-log").innerHTML = sp.log.length
+    ? `<thead><tr><th>Line</th><th>Time</th><th>Speaker</th><th>Engine</th><th>Audio</th><th>Confidence</th><th>Cost</th></tr></thead><tbody>` +
+      sp.log
+        .map((r) => `<tr>
+          <td>${esc(r.id)}</td>
+          <td>${clock(r.start)}</td>
+          <td>${esc(r.speaker)}</td>
+          <td>${esc(r.engine)}</td>
+          <td>${r.seconds.toFixed(1)} s</td>
+          <td>${r.confidence == null ? "–" : `${Math.round(r.confidence * 100)}%`}</td>
+          <td>${money(r.usd)}</td>
+        </tr>`)
+        .join("") + "</tbody>"
+    : `<tbody><tr><td class="m">Nothing logged yet.</td></tr></tbody>`;
 
   const failed = Object.entries(u.failures);
   $("#ev-fail").innerHTML = failed.length
@@ -639,7 +677,7 @@ function render(s) {
   renderPeople(s);
   renderMap(s);
   if (state.tab === "overview") loadOverview();
-  if (state.tab === "evals") renderEvals(s.usage);
+  if (state.tab === "evals") renderEvals(s);
 }
 
 function renderPeople(s) {
@@ -696,7 +734,34 @@ function patchHtml(t, items, s, active) {
 
 // The map is a row of stitched patches, one per topic, in the order the topics came up.
 // Existing patches keep their place. Only their content updates in place.
+// The flow strip: one dot per sentence, in the order it was said, coloured by speaker.
+// A ring marks a sentence that became a card. The newest sentence is marked "latest".
+function renderFlow(s) {
+  const box = $("#flow");
+  const lines = s.utterances.slice(-40);
+  box.hidden = !lines.length;
+  if (!lines.length) return;
+  const mapped = new Set(s.items.flatMap((i) => i.evidence));
+  box.innerHTML = `<div class="flow-track">${lines
+    .map((u, k) => {
+      const label = /\d+/.exec(u.speaker)?.[0] ?? (u.speaker[0] || "?");
+      const cls = ["flow-node", mapped.has(u.id) && "mapped", k === lines.length - 1 && "latest"].filter(Boolean).join(" ");
+      return `<div class="${cls}" title="${esc(u.speaker)}: ${esc(u.text)}">
+        <span class="flow-dot" style="background:${colorOf(u.speaker)}">${esc(label)}</span>
+        <span class="flow-text">${esc(u.text)}</span>
+      </div>`;
+    })
+    .join("")}</div>
+    <div class="flow-key">
+      <span>Each dot is one sentence, in the order it was said</span>
+      <span><i class="k-ring"></i>became a card</span>
+      <span><i class="k-now"></i>latest line</span>
+    </div>`;
+  box.querySelector(".flow-track").scrollLeft = 1e9;
+}
+
 function renderMap(s) {
+  renderFlow(s);
   const holder = $("#patches");
   const latest = s.items.reduce((a, i) => (!a || i.createdAt > a.createdAt ? i : a), null);
   const active = latest?.topicId;

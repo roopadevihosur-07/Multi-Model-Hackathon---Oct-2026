@@ -4,10 +4,10 @@ import { existsSync, readFileSync } from "node:fs";
 import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
 
-// Load .env if present (no dependency needed).
+// Load .env if present (no dependency needed). LIVE_MAP_SKIP_ENV=1 skips it, for tests.
 const root = fileURLToPath(new URL("..", import.meta.url));
 const envPath = join(root, ".env");
-if (existsSync(envPath)) {
+if (process.env.LIVE_MAP_SKIP_ENV !== "1" && existsSync(envPath)) {
   for (const line of readFileSync(envPath, "utf8").split("\n")) {
     const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/);
     if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^["']|["']$/g, "");
@@ -83,6 +83,8 @@ async function api(req: IncomingMessage, res: ServerResponse, path: string, url:
       text,
       start: Number(b.start ?? 0),
       end: Number(b.end ?? 0),
+      engine: ["deepgram", "browser", "demo"].includes(b.engine) ? b.engine : "demo",
+      confidence: b.confidence == null ? undefined : Number(b.confidence),
     });
     return send(res, 200, out);
   }

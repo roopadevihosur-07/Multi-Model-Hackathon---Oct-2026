@@ -33,8 +33,8 @@ Live mode uses Deepgram streaming with speaker labels if `DEEPGRAM_API_KEY` is s
 | Job | Model | Why |
 | --- | --- | --- |
 | Listen | Deepgram nova-3 streaming, speaker labels | Real time, knows who spoke |
-| Alert check | Free text match, then Gemini 2.5 Flash-Lite | Fast; only runs when your name and a question appear |
-| Map updates | Gemini 2.5 Flash-Lite | Cheap enough to run every few seconds |
+| Alert check | Free text match, then Gemini 3.5 Flash-Lite | Fast; only runs when your name and a question appear |
+| Map updates | Gemini 3.5 Flash-Lite | Cheap enough to run every few seconds |
 | Verify | DeepSeek (different provider from the mapper) | No model grades its own work |
 | Recaps | Claude Sonnet | Best at turning a messy conversation into calm, short cards |
 

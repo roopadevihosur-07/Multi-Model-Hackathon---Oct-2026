@@ -23,7 +23,6 @@
           <a href="#architecture">Architecture</a>
           <a href="#workflow">Workflow</a>
           <a href="#models">Models</a>
-          <a href="#judging">Judging</a>
           <a href="#future">Future</a>
         </nav>
         <button class="btn btn-ink btn-sm" data-start>Start a session</button>
@@ -33,7 +32,7 @@
       <section class="hero" id="project">
         <div class="hero-copy">
           <div class="lockup">
-            <svg class="mark" viewBox="236 147 1252 372" aria-hidden="true"><path d="M287 242 C 420 262, 560 372, 692 360 C 820 348, 960 190, 1097 197 C 1250 204, 1370 250, 1410 440" fill="none" stroke="#B9BED6" stroke-width="14" stroke-linecap="round"/><circle cx="287" cy="242" r="48" fill="#3346C9"/><circle cx="692" cy="360" r="48" fill="#B5497A"/><circle cx="1097" cy="197" r="48" fill="#489479"/><circle cx="1410" cy="440" r="75" fill="#EBBB3B"/></svg>
+            <svg class="mark" viewBox="236 147 1252 372" aria-hidden="true"><path pathLength="1" d="M287 242 C 420 262, 560 372, 692 360 C 820 348, 960 190, 1097 197 C 1250 204, 1370 250, 1410 440" fill="none" stroke="#B9BED6" stroke-width="14" stroke-linecap="round"/><circle cx="287" cy="242" r="48" fill="#3346C9"/><circle cx="692" cy="360" r="48" fill="#B5497A"/><circle cx="1097" cy="197" r="48" fill="#489479"/><circle cx="1410" cy="440" r="75" fill="#EBBB3B"/></svg>
             <h1 class="wordmark">dottie</h1>
             <p class="tagline">The live map of every conversation</p>
           </div>
@@ -56,19 +55,17 @@
       </section>
 
       <!-- The problem, in numbers -->
-      <section class="block" id="problem">
+      <section class="block reveal" id="problem">
         <p class="kicker">The problem with metrics</p>
         <h2>Meeting tools measure the summary. People need the thread while it happens.</h2>
         <div class="stat-grid">
           <article class="patch stat"><small>Target</small><b>Under 3 s</b><p>from someone addressing you by name to the alert on your screen.</p></article>
           <article class="patch stat"><small>Independence</small><b>2 providers</b><p>so the model that maps a decision is never the one that checks it.</p></article>
-          <article class="patch stat"><small>Cost estimate</small><b>~$1/hr vs ~$5/hr</b><p>routed across models, compared with one large model doing every job. Shown live in the app.</p></article>
-          <article class="patch stat"><small>Reported gap</small><b>~16% of courses</b><p>in one university's year without enough note-takers, as reported in earlier project notes. Verify before citing.</p></article>
         </div>
       </section>
 
       <!-- Use cases -->
-      <section class="block" id="usecases">
+      <section class="block reveal" id="usecases">
         <p class="kicker">Use cases</p>
         <h2>Anywhere a fast conversation leaves someone behind.</h2>
         <div class="cards">
@@ -80,27 +77,30 @@
       </section>
 
       <!-- System architecture -->
-      <section class="block" id="architecture">
+      <section class="block reveal" id="architecture">
         <p class="kicker">System architecture</p>
         <h2>One pipeline, five jobs, every claim traced to a line of speech.</h2>
-        <div class="flow" aria-label="Pipeline">
-          <div class="node"><b>Speech in</b><span>Deepgram nova-3 streaming, with speaker labels</span></div>
-          <span class="arrow" aria-hidden="true">→</span>
-          <div class="node"><b>Mapper</b><span>Gemini 2.5 Flash-Lite proposes topics and items, each citing transcript lines</span></div>
-          <span class="arrow" aria-hidden="true">→</span>
-          <div class="node node-check"><b>Verifier</b><span>DeepSeek, a different provider, checks each decision and task</span></div>
-          <span class="arrow" aria-hidden="true">→</span>
-          <div class="node"><b>Thread map</b><span>Topic patches, pending and confirmed decisions, audit trail</span></div>
-        </div>
-        <div class="flow flow-side">
-          <div class="node"><b>Alert check</b><span>Free name match first, then Gemini Flash-Lite, only when your name and a question appear</span></div>
-          <div class="node"><b>Catch-up and overview</b><span>Claude Sonnet writes three points, the meeting flow and "where it stands now"</span></div>
+        <div class="explorer" data-explorer>
+          <div class="flow" aria-label="Pipeline">
+            <button class="node" data-detail="Deepgram nova-3 turns speech into text as people talk, and labels which speaker said each line."><b>Speech in</b><span>Deepgram nova-3 streaming, with speaker labels</span></button>
+            <span class="arrow" aria-hidden="true">→</span>
+            <button class="node" data-detail="Gemini 3.5 Flash-Lite reads only the new lines and proposes topics and items. Each item cites the lines it came from."><b>Mapper</b><span>Gemini 3.5 Flash-Lite proposes topics and items, each citing transcript lines</span></button>
+            <span class="arrow" aria-hidden="true">→</span>
+            <button class="node node-check" data-detail="DeepSeek is a different provider from the mapper. It checks each decision and task against the lines, and marks it verified, not agreed, or pending."><b>Verifier</b><span>DeepSeek, a different provider, checks each decision and task</span></button>
+            <span class="arrow" aria-hidden="true">→</span>
+            <button class="node" data-detail="Topics become patches in the order they came up. Confirmed items and the audit trail stay visible, and nothing moves under your eye."><b>Thread map</b><span>Topic patches, pending and confirmed decisions, audit trail</span></button>
+          </div>
+          <div class="flow flow-side">
+            <button class="node" data-detail="Only runs when your name and a question appear in the same line, so most lines cost nothing to check."><b>Alert check</b><span>Free name match first, then Gemini Flash-Lite, only when your name and a question appear</span></button>
+            <button class="node" data-detail="On request, Claude Sonnet writes three calm points, the meeting flow, and where it stands now."><b>Catch-up and overview</b><span>Claude Sonnet writes three points, the meeting flow and "where it stands now"</span></button>
+          </div>
+          <p class="detail" aria-live="polite">Select a stage to see what it does.</p>
         </div>
         <p class="note">If a provider is missing or fails, the router falls back to the next one. With no keys at all, local rules keep the demo running. Every call is priced in the cost ledger.</p>
       </section>
 
       <!-- User workflow -->
-      <section class="block" id="workflow">
+      <section class="block reveal" id="workflow">
         <p class="kicker">User workflow</p>
         <h2>From "everyone agreed" to a decision you confirmed.</h2>
         <ol class="steps">
@@ -113,33 +113,23 @@
       </section>
 
       <!-- Models -->
-      <section class="block" id="models">
+      <section class="block reveal" id="models">
         <p class="kicker">Models</p>
         <h2>Each model chosen for its specific strength; integration unlocks capability.</h2>
-        <div class="cards">
-          <article class="patch"><span class="pill pill-listen">Listen</span><h3>Deepgram nova-3</h3><p>Streaming speech-to-text with speaker labels, so the map knows who said what.</p></article>
-          <article class="patch"><span class="pill pill-fast">Keep up</span><h3>Gemini 2.5 Flash-Lite</h3><p>Fast and inexpensive enough to update the map every few seconds, and to spot questions aimed at you.</p></article>
-          <article class="patch"><span class="pill pill-check">Check</span><h3>DeepSeek</h3><p>A different provider from the mapper, so no model grades its own work.</p></article>
-          <article class="patch"><span class="pill pill-structure">Structure</span><h3>Claude Sonnet</h3><p>Best at turning a messy conversation into calm, short recaps and the meeting overview.</p></article>
+        <div class="explorer" data-explorer>
+          <div class="cards">
+            <button class="patch model" data-detail="Deepgram handles listening. It streams audio, returns text as people talk, and labels the speaker of each line."><span class="pill pill-listen">Listen</span><h3>Deepgram nova-3</h3><p>Streaming speech-to-text with speaker labels, so the map knows who said what.</p></button>
+            <button class="patch model" data-detail="Gemini Flash-Lite keeps the map current. It is cheap enough to run every few seconds, and it spots questions aimed at you."><span class="pill pill-fast">Keep up</span><h3>Gemini 3.5 Flash-Lite</h3><p>Fast and inexpensive enough to update the map every few seconds, and to spot questions aimed at you.</p></button>
+            <button class="patch model" data-detail="DeepSeek checks the work. Because it is a different provider from the mapper, no model grades its own output."><span class="pill pill-check">Check</span><h3>DeepSeek</h3><p>A different provider from the mapper, so no model grades its own work.</p></button>
+            <button class="patch model" data-detail="Claude Sonnet writes the calm parts: short recaps, the meeting overview, and where it stands now."><span class="pill pill-structure">Structure</span><h3>Claude Sonnet</h3><p>Best at turning a messy conversation into calm, short recaps and the meeting overview.</p></button>
+          </div>
+          <p class="detail" aria-live="polite">Select a model to see its job.</p>
         </div>
         <p class="note">One large model could do every job, but at about five times the cost per hour, and without an independent check. Routing is what makes the checks affordable.</p>
       </section>
 
-      <!-- Judging criteria -->
-      <section class="block" id="judging">
-        <p class="kicker">Judging criteria</p>
-        <h2>How dottie meets each criterion.</h2>
-        <div class="cards judge">
-          <article class="patch"><h3>Multi-model integration is essential</h3><b class="pct">25%</b><p>Each model chosen for its specific strength; integration unlocks capability no single model has. Five jobs, two providers cross-checking, and fallbacks that keep it running.</p></article>
-          <article class="patch"><h3>Novel idea with clear differentiation</h3><b class="pct">20%</b><p>Not a summary after the meeting. A live map, an alert when you're asked, and decisions that only count once a person ties them.</p></article>
-          <article class="patch"><h3>Production-ready and economically viable</h3><b class="pct">15%</b><p>Automated end-to-end tests, an audit trail, and a cost ledger that shows routed cost against one large model, live in the app.</p></article>
-          <article class="patch"><h3>Compelling demo under pressure</h3><b class="pct">20%</b><p>A scripted meeting runs through the real pipeline in about 45 seconds: an alert, a verification, a downgrade to "not sure", and a catch-up.</p></article>
-          <article class="patch"><h3>Solves a problem people care about</h3><b class="pct">20%</b><p>Built for people who lose the thread in fast talk. Low sensory load is the design goal: one amber alarm, everything else calm.</p></article>
-        </div>
-      </section>
-
       <!-- Future -->
-      <section class="block" id="future">
+      <section class="block reveal" id="future">
         <p class="kicker">Future implementations</p>
         <h2>Where dottie goes next.</h2>
         <div class="cards">
@@ -229,6 +219,7 @@
 
     <main class="stage">
       <section class="map" id="map-view" aria-label="Conversation map">
+        <div id="flow" class="flow-strip" aria-label="Conversation flow" hidden></div>
         <svg id="thread" class="thread" aria-hidden="true"></svg>
         <div id="patches" class="patches"></div>
         <p id="map-empty" class="empty">Listening. Topics will stitch together here as people talk.</p>
@@ -252,11 +243,18 @@
           <div class="patch ev-card"><small>Spend</small><b id="ev-usd">$0.0000</b></div>
           <div class="patch ev-card"><small>Avg response</small><b id="ev-ms">0 ms</b></div>
           <div class="patch ev-card"><small>Fell back</small><b id="ev-fb">0</b></div>
+          <div class="patch ev-card"><small>Speech audio</small><b id="ev-stt-min">0.00 min</b></div>
+          <div class="patch ev-card"><small>Speech spend</small><b id="ev-stt-usd">$0.0000</b></div>
         </div>
         <h3>By model</h3>
         <div class="scroll"><table class="ev-table" id="ev-models"></table></div>
         <h3>By job</h3>
         <div class="scroll"><table class="ev-table" id="ev-jobs"></table></div>
+        <h3>Speech to text</h3>
+        <div class="scroll"><table class="ev-table" id="ev-speech"></table></div>
+        <h3>Speech log</h3>
+        <p class="muted">Latest 50 lines, newest first. Cost is an estimate from audio time.</p>
+        <div class="scroll"><table class="ev-table" id="ev-stt-log"></table></div>
         <h3>Provider failures</h3>
         <div id="ev-fail" class="muted"></div>
         <p class="muted">Counted from every model call in this session. "Fell back" means a provider failed or had no key, so the next one answered.</p>
@@ -298,6 +296,7 @@
     <div id="popover" class="popover" hidden></div>
   </div>
 
+  <script src="landing.js" defer></script>
   <script src="app.js" type="module"></script>
 </body>
 </html>

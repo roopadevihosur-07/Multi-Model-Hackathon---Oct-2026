@@ -2,7 +2,7 @@ import { route, PRICES, type ModelResult, type Provider } from "./models.ts";
 
 // ---------- Types ----------
 
-export type Utterance = { id: string; speaker: string; text: string; start: number; end: number };
+export type Utterance = { id: string; speaker: string; text: string; start: number; end: number; engine?: "deepgram" | "browser" | "demo"; confidence?: number };
 
 export type Kind = "decision" | "action" | "question" | "idea";
 export type Status = "proposed" | "verified" | "not_agreed" | "rejected";
@@ -491,7 +491,8 @@ export function correct(s: Session, itemId: string) {
 const STT_PER_MIN = 0.0065 + 0.002; // Deepgram streaming + speaker labels
 
 export function costView(s: Session) {
-  const minutes = s.utterances.length ? (s.utterances.at(-1)!.end - s.utterances[0].start) / 60 : 0;
+  // Only Deepgram audio is billed. Browser speech and the demo script cost nothing.
+  const minutes = s.utterances.filter((u) => u.engine === "deepgram").reduce((a, u) => a + Math.max(0, u.end - u.start), 0) / 60;
   const stt = minutes * STT_PER_MIN;
   const routed = s.ledger.reduce((a, e) => a + e.usd, 0) + stt;
   // A single strong model would also check every utterance for the alert (we skip those for free).
@@ -570,6 +571,41 @@ export function usageView(s: Session) {
   };
 }
 
+// ---------- Speech to text: which engine heard each line, how much audio, what it cost ----------
+
+export function sttView(s: Session) {
+  const rows = s.utterances.map((u) => {
+    const engine = u.engine ?? "demo";
+    const seconds = Math.max(0, u.end - u.start);
+    const usd = engine === "deepgram" ? (seconds / 60) * STT_PER_MIN : 0;
+    return { id: u.id, speaker: u.speaker, engine, start: u.start, seconds, confidence: u.confidence ?? null, usd };
+  });
+  const byEngine = new Map<string, { engine: string; lines: number; seconds: number; usd: number; conf: number[] }>();
+  for (const r of rows) {
+    const e = byEngine.get(r.engine) ?? { engine: r.engine, lines: 0, seconds: 0, usd: 0, conf: [] };
+    e.lines++;
+    e.seconds += r.seconds;
+    e.usd += r.usd;
+    if (r.confidence != null) e.conf.push(r.confidence);
+    byEngine.set(r.engine, e);
+  }
+  const engines = [...byEngine.values()].map((e) => ({
+    engine: e.engine,
+    lines: e.lines,
+    seconds: e.seconds,
+    usd: e.usd,
+    avgConfidence: e.conf.length ? e.conf.reduce((a, b) => a + b, 0) / e.conf.length : null,
+  }));
+  const dgSeconds = rows.filter((r) => r.engine === "deepgram").reduce((a, r) => a + r.seconds, 0);
+  return {
+    lines: rows.length,
+    minutes: dgSeconds / 60,
+    usd: rows.reduce((a, r) => a + r.usd, 0),
+    engines,
+    log: rows.slice(-50).reverse(),
+  };
+}
+
 export function view(s: Session) {
   return {
     id: s.id,
@@ -582,6 +618,7 @@ export function view(s: Session) {
     alerts: s.alerts,
     cost: costView(s),
     usage: usageView(s),
+    speech: sttView(s),
     audit: s.audit.slice(-60),
   };
 }

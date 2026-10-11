@@ -91,9 +91,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, .tab:focus-visible {
 .tagline { font-family: var(--body); font-weight: 700; font-size: 20px; color: var(--ink-soft); margin: 4px 0 0; }
 
 .hero { display: grid; grid-template-columns: 1.05fr 1fr; gap: 48px; align-items: center; padding: 32px 0 56px; }
-.eyebrow { font-size: 15px; color: var(--ink-soft); margin-bottom: 14px; }
 .hero h1 { font-size: clamp(44px, 6vw, 72px); font-weight: 800; letter-spacing: -0.035em; line-height: 1.02; }
-.lede { font-size: 19px; color: var(--ink-soft); margin: 18px 0 26px; max-width: 58ch; }
+.muted-item { color: var(--ink-soft); }
 .cta { display: flex; gap: 12px; flex-wrap: wrap; }
 .hero-preview { display: grid; gap: 14px; }
 .turn-preview { background: var(--saffron-wash); border: 2.5px solid var(--saffron); border-radius: 22px 22px 22px 6px; padding: 18px 22px; display: grid; gap: 4px; }
@@ -116,9 +115,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, .tab:focus-visible {
 .stat small { color: var(--ink-soft); font-size: 14px; }
 .stat b { font-family: var(--display); font-weight: 800; font-size: 30px; letter-spacing: -0.03em; }
 .stat p { color: var(--ink-soft); font-size: 15px; }
-.judge .patch { display: grid; gap: 6px; align-content: start; }
-.judge .pct { font-family: var(--display); font-weight: 800; font-size: 40px; letter-spacing: -0.03em; }
-.judge p { color: var(--ink-soft); font-size: 16px; }
 .note { color: var(--ink-soft); font-size: 15px; margin-top: 18px; max-width: 80ch; }
 
 /* Architecture */
@@ -204,6 +200,21 @@ button:focus-visible, a:focus-visible, input:focus-visible, .tab:focus-visible {
 .thread { position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; z-index: 0; }
 .thread path { fill: none; stroke: var(--indigo); stroke-width: 5; stroke-linecap: round; stroke-dasharray: 0 13; }
 .thread path.draw { animation: dotIn .9s ease-out both; }
+/* Flow strip: each sentence is a dot, joined in the order it was said */
+.flow-strip { position: relative; z-index: 1; background: var(--patch); border: 1.5px dotted var(--stitch); border-radius: 18px; padding: 14px 16px 12px; margin-bottom: 28px; }
+.flow-strip[hidden] { display: none; }
+.flow-track { display: flex; gap: 0; overflow-x: auto; padding: 4px 2px 6px; scroll-behavior: smooth; }
+.flow-node { position: relative; flex: 0 0 150px; display: grid; justify-items: start; gap: 8px; padding-right: 16px; min-width: 0; }
+.flow-node::before { content: ""; position: absolute; top: 16px; left: 34px; right: 0; border-top: 2px dotted var(--stitch); }
+.flow-node:last-child::before { display: none; }
+.flow-dot { position: relative; z-index: 1; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; color: #fff; font: 700 15px var(--body); }
+.flow-node.mapped .flow-dot { box-shadow: 0 0 0 3px var(--patch), 0 0 0 5px var(--ink); }
+.flow-node.latest .flow-dot { box-shadow: 0 0 0 7px rgba(51, 70, 201, .16); }
+.flow-text { font-size: 14px; line-height: 1.35; color: var(--ink-soft); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.flow-key { display: flex; gap: 18px; flex-wrap: wrap; font-size: 14px; color: var(--ink-soft); border-top: 1.5px dotted var(--stitch); margin-top: 8px; padding-top: 10px; }
+.flow-key i { display: inline-block; width: 14px; height: 14px; border-radius: 50%; margin-right: 6px; vertical-align: -2px; }
+.flow-key .k-ring { box-shadow: 0 0 0 2px var(--ink); background: var(--patch); }
+.flow-key .k-now { background: var(--indigo); box-shadow: 0 0 0 4px rgba(51, 70, 201, .18); }
 .patches { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 56px; align-items: start; }
 .patches .patch { display: grid; gap: 8px; align-content: start; animation: fadeIn .3s ease-out; }
 .patches .patch.now { outline: 2.5px solid var(--indigo); outline-offset: -8px; }
@@ -326,4 +337,40 @@ button:focus-visible, a:focus-visible, input:focus-visible, .tab:focus-visible {
   .drawer.side { left: 8px; right: 8px; width: auto; top: 200px; bottom: 96px; }
   .top, .subbar, .stage { padding-left: 16px; padding-right: 16px; }
   .block h2 { font-size: 22px; }
+}
+
+/* ---------- Landing: interactive sections and motion ---------- */
+.js .reveal:not(.in) { opacity: 0; transform: translateY(16px); }
+.reveal { transition: opacity .6s ease, transform .6s ease; }
+
+/* Logo draws itself on load, then the dots pop in along the curve */
+.lockup .mark path { stroke-dasharray: 1; stroke-dashoffset: 1; animation: drawCurve 1.4s ease-out .2s forwards; }
+.lockup .mark circle { transform-box: fill-box; transform-origin: center; animation: popDot .5s ease-out both; }
+.lockup .mark circle:nth-of-type(1) { animation-delay: .3s; }
+.lockup .mark circle:nth-of-type(2) { animation-delay: .7s; }
+.lockup .mark circle:nth-of-type(3) { animation-delay: 1.0s; }
+.lockup .mark circle:nth-of-type(4) { animation-delay: 1.3s; }
+@keyframes drawCurve { to { stroke-dashoffset: 0; } }
+@keyframes popDot { from { transform: scale(0); } to { transform: scale(1); } }
+
+/* Clickable pipeline stages and model cards */
+button.node, button.model { font: inherit; color: var(--ink); text-align: left; cursor: pointer; width: 100%; }
+button.node { transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
+button.node:hover, button.model:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(29, 33, 64, .10); }
+button.node[aria-pressed="true"] { border: 2px solid var(--indigo); box-shadow: 0 8px 20px rgba(51, 70, 201, .14); }
+button.model { border: 0; transition: transform .2s ease, box-shadow .2s ease, outline-color .2s ease; outline: 2px dotted var(--stitch); outline-offset: -8px; }
+button.model[aria-pressed="true"] { outline: 2.5px solid var(--indigo); }
+button.node:focus-visible, button.model:focus-visible { outline: 3px solid var(--indigo); outline-offset: 3px; }
+.detail { margin-top: 18px; max-width: 80ch; min-height: 3.2em; background: var(--patch); border-radius: 14px; border-left: 4px solid var(--indigo); padding: 14px 18px; font-size: 17px; color: var(--ink); }
+
+/* Hover lift on static cards */
+.cards .patch, .stat { transition: transform .2s ease, box-shadow .2s ease; }
+.cards .patch:hover, .stat:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(29, 33, 64, .10); }
+
+/* Steps joined by a dotted line */
+.steps li { position: relative; }
+.steps li:not(:last-child)::after { content: ""; position: absolute; left: 35px; top: 60px; bottom: -14px; border-left: 2px dotted var(--stitch); }
+@media (prefers-reduced-motion: reduce) {
+  .lockup .mark path { stroke-dashoffset: 0; }
+  .js .reveal:not(.in) { opacity: 1; transform: none; }
 }

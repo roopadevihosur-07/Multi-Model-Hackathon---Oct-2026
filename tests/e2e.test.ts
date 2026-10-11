@@ -9,9 +9,8 @@ const PORT = 3900 + Math.floor(Math.random() * 90);
 const BASE = `http://localhost:${PORT}`;
 let server: ChildProcess;
 
-// Blank keys so the server starts in simulated mode. Note: a .env file with real keys still
-// fills them in, so run the test without one to be sure it is fully offline.
-const NO_KEYS = { GEMINI_API_KEY: "", DEEPSEEK_API_KEY: "", ANTHROPIC_API_KEY: "", DEEPGRAM_API_KEY: "" };
+// Blank keys so the server starts in simulated mode, and skip any local .env file so real keys do not leak in.
+const NO_KEYS = { GEMINI_API_KEY: "", DEEPSEEK_API_KEY: "", ANTHROPIC_API_KEY: "", DEEPGRAM_API_KEY: "", LIVE_MAP_SKIP_ENV: "1" };
 
 before(async () => {
   server = spawn(process.execPath, ["--import", "tsx", fileURLToPath(new URL("../src/main.ts", import.meta.url))], {

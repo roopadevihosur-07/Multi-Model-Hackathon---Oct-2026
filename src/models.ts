@@ -16,7 +16,7 @@ export type ModelResult = {
 const env = process.env;
 
 export const MODELS = {
-  gemini: env.GEMINI_MODEL || "gemini-2.5-flash-lite",
+  gemini: env.GEMINI_MODEL || "gemini-3.5-flash-lite",
   deepseek: env.DEEPSEEK_MODEL || "deepseek-chat",
   anthropic: env.ANTHROPIC_MODEL || "claude-sonnet-5-5",
 };
