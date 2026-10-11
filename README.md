@@ -4,6 +4,8 @@ A live, verified visual map of the conversation you're in, so neurodivergent peo
 
 **Tagline:** The live map of every conversation.
 
+<u>**[Live landing page: roopadevihosur-07.github.io/Multi-Model-Hackathon---Oct-2026](https://roopadevihosur-07.github.io/Multi-Model-Hackathon---Oct-2026/)**</u>
+
 Built for the Multi Model Hackathon, SF Tech Week 2026.
 
 ## Run it
