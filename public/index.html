@@ -44,25 +44,29 @@
           </div>
         </div>
         <div class="hero-preview" aria-hidden="true">
-          <div class="turn-preview">
+          <div class="turn-preview" data-turn>
+            <button class="turn-x" data-dismiss aria-label="Dismiss">×</button>
             <b>Your turn: Marcus is asking you</b>
             <span>“Can your team test the new onboarding flow by Friday?”</span>
           </div>
+          <button class="btn btn-ghost btn-sm replay" data-replay hidden>Show the alert again</button>
           <div class="mini-grid">
-            <article class="patch"><div class="who">Priya · 3 min</div><h4>Onboarding numbers</h4><p class="mini-line">Drop-off is highest on step 3</p><p class="mini-tie">Tied: redesign step 3 first</p></article>
+            <article class="patch"><div class="who">Priya · 3 min</div><h4>Onboarding numbers</h4><p class="mini-line">Drop-off is highest on step 3</p><button class="mini-tie" data-tie aria-pressed="true">Tied: redesign step 3 first</button></article>
             <article class="patch now"><span class="now-tag">Now</span><div class="who">Priya and Marcus</div><h4>Testing before launch</h4><p class="mini-line">Question for you: test by Friday?</p></article>
           </div>
         </div>
       </section>
 
-      <!-- The problem, in numbers -->
+      <!-- The problem -->
       <section class="block reveal" id="problem">
-        <p class="kicker">The problem with metrics</p>
-        <h2>Meeting tools measure the summary. People need the thread while it happens.</h2>
-        <div class="stat-grid">
-          <article class="patch stat"><small>Target</small><b>Under 3 s</b><p>from someone addressing you by name to the alert on your screen.</p></article>
-          <article class="patch stat"><small>Independence</small><b>2 providers</b><p>so the model that maps a decision is never the one that checks it.</p></article>
+        <p class="kicker">The problem</p>
+        <h2>In a fast conversation, a summary arrives after the decision has already been made.</h2>
+        <div class="cards">
+          <article class="patch"><h3>Who gets left behind</h3><p>People with ADHD, autism or auditory processing differences can lose the thread when several people talk at once and the topic jumps.</p></article>
+          <article class="patch"><h3>Why current tools do not help</h3><p>Meeting tools summarise afterwards. The summary can miss who was asked a question, and it arrives after the moment to join in has passed.</p></article>
+          <article class="patch"><h3>What dottie does instead</h3><p>It builds a map while people talk, alerts you when someone turns to you, and checks each decision against the words that were said. Target: an alert within 3 seconds.</p></article>
         </div>
+        <p class="note">Note-taking support is hard to staff in many lectures and meetings, so the thread is often lost before anyone can follow it.</p>
       </section>
 
       <!-- From speech to map -->
@@ -120,6 +124,7 @@
           <article class="patch"><h3>Workplace meetings</h3><p>An accommodation for a team member who needs the thread in planning and standup meetings.</p></article>
           <article class="patch"><h3>Lectures and seminars</h3><p>Disability services can offer live maps where note-taking support is hard to staff.</p></article>
           <article class="patch"><h3>Interviews and panels</h3><p>Hear when a question is aimed at you, and catch up on what the panel already covered.</p></article>
+          <article class="patch"><h3>Multilingual rooms</h3><p>Get the context of a conversation in a language that is not your strongest: the topics, decisions and tasks as they come up.</p></article>
           <article class="patch"><h3>Family and community meetings</h3><p>Keep decisions and tasks visible when several people talk at once.</p></article>
         </div>
       </section>

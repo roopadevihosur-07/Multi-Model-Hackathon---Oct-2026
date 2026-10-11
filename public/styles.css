@@ -101,7 +101,15 @@ button:focus-visible, a:focus-visible, input:focus-visible, .tab:focus-visible {
 .mini-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .mini-grid .patch { display: grid; gap: 8px; align-content: start; }
 .mini-line { font-size: 15px; }
-.mini-tie { font-size: 15px; background: var(--mint-wash); border-radius: 10px; padding: 6px 10px; }
+.mini-tie { font: 400 15px var(--body); color: var(--ink); text-align: left; border: 0; cursor: pointer; background: var(--mint-wash); border-radius: 10px; padding: 6px 10px; transition: background .2s ease; }
+.mini-tie.loose { background: var(--saffron-wash); }
+.mini-tie:focus-visible, .turn-x:focus-visible, .replay:focus-visible { outline: 3px solid var(--indigo); outline-offset: 3px; }
+.turn-preview { position: relative; }
+.turn-x { position: absolute; top: 8px; right: 12px; width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid var(--stitch); background: var(--patch); color: var(--ink); font: 700 18px var(--body); line-height: 1; cursor: pointer; }
+.turn-preview.gone { display: none; }
+.replay { justify-self: start; }
+.hero-preview .patch { transition: transform .2s ease, box-shadow .2s ease; }
+.hero-preview .patch:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(29, 33, 64, .10); }
 .now-tag { position: absolute; top: -14px; right: 18px; background: var(--indigo); color: #fff; font: 700 13px var(--body); padding: 3px 12px; border-radius: 999px; }
 
 .block { padding: 56px 0; border-top: 1.5px dotted var(--stitch); }

@@ -54,3 +54,23 @@ if (lanes) {
   picks.forEach((b) => b.addEventListener("click", () => show(b.dataset.pick)));
   show(0);
 }
+
+// Hero preview: dismiss the "Your turn" banner (it stays until dismissed, as in the app) and tie or loosen an item.
+document.querySelectorAll("[data-dismiss]").forEach((b) => {
+  b.addEventListener("click", () => {
+    b.closest("[data-turn]").classList.add("gone");
+    document.querySelector("[data-replay]").hidden = false;
+  });
+});
+document.querySelector("[data-replay]")?.addEventListener("click", (e) => {
+  document.querySelector("[data-turn]").classList.remove("gone");
+  e.currentTarget.hidden = true;
+});
+document.querySelectorAll("[data-tie]").forEach((b) => {
+  b.addEventListener("click", () => {
+    const tied = b.getAttribute("aria-pressed") !== "true";
+    b.setAttribute("aria-pressed", String(tied));
+    b.classList.toggle("loose", !tied);
+    b.textContent = tied ? "Tied: redesign step 3 first" : "Loose: redesign step 3 first?";
+  });
+});
